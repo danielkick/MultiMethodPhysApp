@@ -449,7 +449,7 @@ server <- function(input, output) {
         output$MainTable <- renderTable({
           data.frame(Method = fm.Fr$method,
                      t = fm.Fr$statistic,
-                     df = fm.Fr$df,
+                     df = fm.Fr$parameter,
                      pValue = fm.Fr$p.value)
         })
         
