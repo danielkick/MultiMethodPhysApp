@@ -1,0 +1,13 @@
+name: MultiMethodPhysApp
+title: MultiMethodPhysApp
+username:
+account: danielkick
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1110515
+bundleId: 2351408
+url: https://danielkick.shinyapps.io/multimethodphysapp/
+when: 1566661025.94383
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: Cab.csv|CabCompCult.csv|CabCompDay.csv|Cockroach01.csv|Cockroach02.csv|Cockroach02a.csv|Cockroach03.csv|Diving01.csv|irisData.csv|scratchpad.R|Sensory01.csv

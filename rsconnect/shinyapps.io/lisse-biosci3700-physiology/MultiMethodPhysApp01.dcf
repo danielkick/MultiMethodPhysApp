@@ -1,0 +1,12 @@
+name: MultiMethodPhysApp01
+title: MultiMethodPhysApp01
+username:
+account: lisse-biosci3700-physiology
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1116932
+bundleId: 2358577
+url: https://lisse-biosci3700-physiology.shinyapps.io/MultiMethodPhysApp01/
+when: 1566875463.92267
+asMultiple: FALSE
+asStatic: FALSE
