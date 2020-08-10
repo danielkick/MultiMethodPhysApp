@@ -35,8 +35,8 @@ ui <- tagList(
                     )
           ),
           "If dependent variables are in multiple columns, specify the first and last columns.",
-          numericInput("FirstGather", label = "First data column", value = 2),
-          numericInput("LastGather", label = "Last data column", value = 3),
+          numericInput("FirstGather", label = "First data column", value = 1),
+          numericInput("LastGather", label = "Last data column", value = 2),
           # textInput("KeyName", label = ("Independent Variable Name"), value = ""),
           # textInput("ValueName", label = ("Dependent Variable Name"), value = ""),
           checkboxInput("RunGather", label = "Convert to long format", value = FALSE),          
