@@ -48,9 +48,8 @@ ui <- tagList(
           # dept.var = "Value"
           # indept.var = "Key"
           # color.var = "Cult"
-          
-          textInput("dept.var", label = ("Dependent Variable"), value = "Value"),
-          textInput("indept.var", label = ("Independent Variable"), value = "Key"),
+          textInput("indept.var", label = ("Independent Variable (X)"), value = "Key"),
+          textInput("dept.var", label = ("Dependent Variable (Y)"), value = "Value"),
           checkboxInput("ColorBy", label = "Color by Variable?", value = FALSE),
           textInput("color.var", label = ("Coloring Variable"), value = "")
           
