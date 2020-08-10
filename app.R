@@ -62,7 +62,10 @@ ui <- tagList(
           
           "Visualized:",
           # plotOutput("user_plot"),
-          plotOutput("user_plot2")
+          plotOutput("user_plot2"),
+          
+          "Descriptive Statistics:",
+          tableOutput("summary_stats")
           
         )
       )
@@ -392,6 +395,32 @@ server <- function(input, output) {
         
       })
     }
+    
+    ## Provide Summary stats Table  ####
+    if (class(df) == "data.frame") {
+      req(input$dept.var)
+      req(input$indept.var)
+      req(df)
+      
+      summary_df <- do.call(rbind,
+              map(unique(df[[indept.var]]), function(i){
+                data.frame(
+                  Group = i,
+                  mean = mean(unlist(df[df[[indept.var]] == i, dept.var]), na.rm = T),
+                  median = median(unlist(df[df[[indept.var]] == i, dept.var]), na.rm = T),
+                  sd = sd(unlist(df[df[[indept.var]] == i, dept.var]), na.rm = T),
+                  q1 = quantile(unlist(df[df[[indept.var]] == i, dept.var]), 0.25, na.rm = T),
+                  q3 = quantile(unlist(df[df[[indept.var]] == i, dept.var]), 0.75, na.rm = T)
+                )
+              })
+      )
+      
+      output$summary_stats <- renderTable({
+        summary_df
+      })
+
+    }
+    
     ## For Tab 2 Freq ====
     ### Check Assumptions ####
     if (input$RunAssumptions == T){
