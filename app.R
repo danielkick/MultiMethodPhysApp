@@ -132,35 +132,35 @@ ui <- tagList(
       )
     ),
     
-    ## Tab 4 brms Methods ====
-    tabPanel(
-      "Bayesian Method (MCMC)",
-      sidebarPanel(
-
-        "This model can take a little while to run since it is running online. Please allow a few minutes to run.",
-        checkboxInput("RunBrmsModel", label = "Run Bayesian model?", value = F)
-
-      ),
-      mainPanel(
-        "Posterior Probabilites:",
-        plotOutput("Posts"),
-        tableOutput("PostsTable"),
-        tags$style(
-          type = "text/css",
-          "#PosteriorStats {white-space: pre-wrap;}"
-        ),
-
-        "Subtracted Posteriors:",
-        plotOutput("PostDifs"),
-        tableOutput("PostDifsTable"),
-        tags$style(
-          type = "text/css",
-          "#PosteriorStats {white-space: pre-wrap;}"
-        )
-
-
-      )
-    ),
+    # ## Tab 4 brms Methods ====
+    # tabPanel(
+    #   "Bayesian Method (MCMC)",
+    #   sidebarPanel(
+    # 
+    #     "This model can take a little while to run since it is running online. Please allow a few minutes to run.",
+    #     checkboxInput("RunBrmsModel", label = "Run Bayesian model?", value = F)
+    # 
+    #   ),
+    #   mainPanel(
+    #     "Posterior Probabilites:",
+    #     plotOutput("Posts"),
+    #     tableOutput("PostsTable"),
+    #     tags$style(
+    #       type = "text/css",
+    #       "#PosteriorStats {white-space: pre-wrap;}"
+    #     ),
+    # 
+    #     "Subtracted Posteriors:",
+    #     plotOutput("PostDifs"),
+    #     tableOutput("PostDifsTable"),
+    #     tags$style(
+    #       type = "text/css",
+    #       "#PosteriorStats {white-space: pre-wrap;}"
+    #     )
+    # 
+    # 
+    #   )
+    # ),
     
     
     ## Tab 5 MAP Methods ====
@@ -566,164 +566,164 @@ server <- function(input, output) {
       }
     }
     
-    ## For Tab 4 brms ====
-
-
-    if (input$RunBrmsModel == T){
-
-      # Bayesian
-      bfm <- brms::brm(data = df, family = gaussian,
-                       as.formula(paste(dept.var, "~", #"1 +",
-                                        indept.var,
-                                        sep = " ")),
-                       iter = 2000,
-                       warmup = 500)
-      # ,
-      # chains = 4, cores = 1, seed =1)
-
-      # library(tidybayes)
-
-
-      post <- posterior_samples(bfm)
-
-      # levels to move over
-      exp.levels <- df[[indept.var]] %>% levels()
-      # retain cols for the independent variables
-      post <- post[, seq_along(exp.levels)]
-      names(post) <- exp.levels
-
-
-      #FIXME breaks with uploaded Cabbages Dataset
-      print("3")
-      #TODO confirm this works properly.
-      # should match (more or less) MAP fitting.
-      # Adding all but first col to get the variable level _with_ the intercept taken into account.
-
-      # for (i in seq(2, ncol(post))){
-      #   post[,i] <- post[,i] + post[,1]
-      # }
-
-      post2 <- post[,1]
-      for (i in seq(2, ncol(post))){
-        post2 <- rbind(post2, post[,i] + post[,1])
-      }
-      post <- post2
-
-      print("2")
-
-      # Summary tables
-      post.table <-
-        map_df(seq(1, ncol(post)), function(i){
-
-          int.1 <- bayestestR::hdi(post[,i], ci = 0.67)
-          int.2 <- bayestestR::hdi(post[,i], ci = 0.89)
-          int.3 <- bayestestR::hdi(post[,i], ci = 0.97)
-
-          data.frame("Distribution"=   names(post)[i],
-                     "l 0.97" =   int.3$CI_low,
-                     "l 0.89"=   int.2$CI_low,
-                     "l 0.67"=   int.1$CI_low,
-                     "Mode"=  rethinking::chainmode(post[,i]),
-                     "u 0.67"=   int.1$CI_high,
-                     "u 0.89"=  int.2$CI_high,
-                     "u 0.97"=  int.3$CI_high)
-        })
-
-
-      output$PostsTable <- renderTable({
-        post.table
-      })
-
-      # Summary Figure
-      df.ridges <- post %>% gather(Condition, Value, seq(1, ncol(post)))
-
-      # library(ggridges)
-      output$Posts <- renderPlot({
-        ggplot(df.ridges, aes(x =  Value, y = Condition, fill =  Condition))+
-          ggridges::geom_density_ridges(alpha = 0.5)+
-          theme_minimal()+
-          scale_fill_brewer(type = "qual", palette = "Set1")
-      })
-
-      # Name all comparisons between groups
-      Var1 <- c()
-      Var2 <- c()
-
-      for (i in seq_along(exp.levels)){
-        for(j in seq(i, length(exp.levels))){
-          # print(paste(i, j))
-          if(j != i){
-            Var1 <- c(Var1, exp.levels[i])
-            Var2 <- c(Var2, exp.levels[j])
-          }
-        }
-      }
-
-      df.difs <- as.data.frame(matrix(nrow = nrow(post), ncol = length(Var1)))
-      names(df.difs) <- paste(Var1, Var2, sep = "_m_")
-      # Done separately to avoid ggplot2 parsing errors
-      df.labs <- paste(Var1, Var2, sep = "-")
-
-      # Make all comparisons
-      for (i in seq_along(Var1)){
-        df.difs[,i] <- post[, Var1[i]] - post[, Var2[i]]
-      }
-
-      # Difference Tables
-      difs.table <-
-        map_df(seq(1, ncol(df.difs)), function(i){
-
-          int.1 <- bayestestR::hdi(df.difs[,i], ci = 0.67)
-          int.2 <- bayestestR::hdi(df.difs[,i], ci = 0.89)
-          int.3 <- bayestestR::hdi(df.difs[,i], ci = 0.97)
-
-          data.frame("Comparison"=   df.labs[i],
-                     "l 0.97" =   int.3$CI_low,
-                     "l 0.89"=   int.2$CI_low,
-                     "l 0.67"=   int.1$CI_low,
-                     "Mode"=  rethinking::chainmode(df.difs[,i]),
-                     "u 0.67"=   int.1$CI_high,
-                     "u 0.89"=  int.2$CI_high,
-                     "u 0.97"=  int.3$CI_high)
-        })
-      output$PostDifsTable <- renderTable({
-        difs.table
-      })
-
-      # Difference Figure
-      difs.plts <-
-        purrr::map(seq_along(Var1), function(i){
-          # i = 1
-          data.col <- names(df.difs)[i]
-
-          ggplot(df.difs, aes_string(x = data.col, y = 0)) +
-            geom_halfeyeh(#fill = "steelblue",
-              point_interval = median_qi,
-              .width = c(.89)) +
-            stat_intervalh(.width = c(.67, .89, .97)) +
-            # scale_y_continuous(NULL, breaks = NULL) +
-            # labs(subtitle = "Model-implied difference score",
-            #      x = expression(alpha["male"] - alpha["female"])) +
-            geom_vline(xintercept = rethinking::chainmode(df.difs[[data.col]]),
-                       size = 1,
-                       linetype = "dashed",
-                       color = "steelblue") +
-            geom_vline(xintercept = 0,
-                       size = 1,
-                       linetype = "dashed",
-                       color = "black") +
-            labs(title = df.labs[i], x = "", y = "Density")+
-            theme_minimal()+
-            theme(legend.position = "")+
-            scale_color_brewer()
-        })
-
-      output$PostDifs <- renderPlot({
-        cowplot::plot_grid(plotlist = difs.plts)
-      })
-    }
-    
-    
+    # ## For Tab 4 brms ====
+    # 
+    # 
+    # if (input$RunBrmsModel == T){
+    # 
+    #   # Bayesian
+    #   bfm <- brms::brm(data = df, family = gaussian,
+    #                    as.formula(paste(dept.var, "~", #"1 +",
+    #                                     indept.var,
+    #                                     sep = " ")),
+    #                    iter = 2000,
+    #                    warmup = 500)
+    #   # ,
+    #   # chains = 4, cores = 1, seed =1)
+    # 
+    #   # library(tidybayes)
+    # 
+    # 
+    #   post <- posterior_samples(bfm)
+    # 
+    #   # levels to move over
+    #   exp.levels <- df[[indept.var]] %>% levels()
+    #   # retain cols for the independent variables
+    #   post <- post[, seq_along(exp.levels)]
+    #   names(post) <- exp.levels
+    # 
+    # 
+    #   #FIXME breaks with uploaded Cabbages Dataset
+    #   print("3")
+    #   #TODO confirm this works properly.
+    #   # should match (more or less) MAP fitting.
+    #   # Adding all but first col to get the variable level _with_ the intercept taken into account.
+    # 
+    #   # for (i in seq(2, ncol(post))){
+    #   #   post[,i] <- post[,i] + post[,1]
+    #   # }
+    # 
+    #   post2 <- post[,1]
+    #   for (i in seq(2, ncol(post))){
+    #     post2 <- rbind(post2, post[,i] + post[,1])
+    #   }
+    #   post <- post2
+    # 
+    #   print("2")
+    # 
+    #   # Summary tables
+    #   post.table <-
+    #     map_df(seq(1, ncol(post)), function(i){
+    # 
+    #       int.1 <- bayestestR::hdi(post[,i], ci = 0.67)
+    #       int.2 <- bayestestR::hdi(post[,i], ci = 0.89)
+    #       int.3 <- bayestestR::hdi(post[,i], ci = 0.97)
+    # 
+    #       data.frame("Distribution"=   names(post)[i],
+    #                  "l 0.97" =   int.3$CI_low,
+    #                  "l 0.89"=   int.2$CI_low,
+    #                  "l 0.67"=   int.1$CI_low,
+    #                  "Mode"=  rethinking::chainmode(post[,i]),
+    #                  "u 0.67"=   int.1$CI_high,
+    #                  "u 0.89"=  int.2$CI_high,
+    #                  "u 0.97"=  int.3$CI_high)
+    #     })
+    # 
+    # 
+    #   output$PostsTable <- renderTable({
+    #     post.table
+    #   })
+    # 
+    #   # Summary Figure
+    #   df.ridges <- post %>% gather(Condition, Value, seq(1, ncol(post)))
+    # 
+    #   # library(ggridges)
+    #   output$Posts <- renderPlot({
+    #     ggplot(df.ridges, aes(x =  Value, y = Condition, fill =  Condition))+
+    #       ggridges::geom_density_ridges(alpha = 0.5)+
+    #       theme_minimal()+
+    #       scale_fill_brewer(type = "qual", palette = "Set1")
+    #   })
+    # 
+    #   # Name all comparisons between groups
+    #   Var1 <- c()
+    #   Var2 <- c()
+    # 
+    #   for (i in seq_along(exp.levels)){
+    #     for(j in seq(i, length(exp.levels))){
+    #       # print(paste(i, j))
+    #       if(j != i){
+    #         Var1 <- c(Var1, exp.levels[i])
+    #         Var2 <- c(Var2, exp.levels[j])
+    #       }
+    #     }
+    #   }
+    # 
+    #   df.difs <- as.data.frame(matrix(nrow = nrow(post), ncol = length(Var1)))
+    #   names(df.difs) <- paste(Var1, Var2, sep = "_m_")
+    #   # Done separately to avoid ggplot2 parsing errors
+    #   df.labs <- paste(Var1, Var2, sep = "-")
+    # 
+    #   # Make all comparisons
+    #   for (i in seq_along(Var1)){
+    #     df.difs[,i] <- post[, Var1[i]] - post[, Var2[i]]
+    #   }
+    # 
+    #   # Difference Tables
+    #   difs.table <-
+    #     map_df(seq(1, ncol(df.difs)), function(i){
+    # 
+    #       int.1 <- bayestestR::hdi(df.difs[,i], ci = 0.67)
+    #       int.2 <- bayestestR::hdi(df.difs[,i], ci = 0.89)
+    #       int.3 <- bayestestR::hdi(df.difs[,i], ci = 0.97)
+    # 
+    #       data.frame("Comparison"=   df.labs[i],
+    #                  "l 0.97" =   int.3$CI_low,
+    #                  "l 0.89"=   int.2$CI_low,
+    #                  "l 0.67"=   int.1$CI_low,
+    #                  "Mode"=  rethinking::chainmode(df.difs[,i]),
+    #                  "u 0.67"=   int.1$CI_high,
+    #                  "u 0.89"=  int.2$CI_high,
+    #                  "u 0.97"=  int.3$CI_high)
+    #     })
+    #   output$PostDifsTable <- renderTable({
+    #     difs.table
+    #   })
+    # 
+    #   # Difference Figure
+    #   difs.plts <-
+    #     purrr::map(seq_along(Var1), function(i){
+    #       # i = 1
+    #       data.col <- names(df.difs)[i]
+    # 
+    #       ggplot(df.difs, aes_string(x = data.col, y = 0)) +
+    #         geom_halfeyeh(#fill = "steelblue",
+    #           point_interval = median_qi,
+    #           .width = c(.89)) +
+    #         stat_intervalh(.width = c(.67, .89, .97)) +
+    #         # scale_y_continuous(NULL, breaks = NULL) +
+    #         # labs(subtitle = "Model-implied difference score",
+    #         #      x = expression(alpha["male"] - alpha["female"])) +
+    #         geom_vline(xintercept = rethinking::chainmode(df.difs[[data.col]]),
+    #                    size = 1,
+    #                    linetype = "dashed",
+    #                    color = "steelblue") +
+    #         geom_vline(xintercept = 0,
+    #                    size = 1,
+    #                    linetype = "dashed",
+    #                    color = "black") +
+    #         labs(title = df.labs[i], x = "", y = "Density")+
+    #         theme_minimal()+
+    #         theme(legend.position = "")+
+    #         scale_color_brewer()
+    #     })
+    # 
+    #   output$PostDifs <- renderPlot({
+    #     cowplot::plot_grid(plotlist = difs.plts)
+    #   })
+    # }
+    # 
+    # 
     ## For Tab 5 MAP ====
     ### ####Cont
     
